@@ -1,6 +1,6 @@
 import javax.swing.SwingUtilities;
 
-import ui.MainApp;
+import ui.*;
 
 public class App {
     public static void main(String[] args) throws Exception {

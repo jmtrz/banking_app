@@ -1,17 +1,25 @@
 package ui;
 
-import javax.swing.*;
+
+
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import javax.swing.*;
 
 public class Dashboard extends JPanel {
     
     private MainApp mainApp;
+    private TransactionManager transactionManager;
+    private CustomerManager customerManager;
     
     public Dashboard(MainApp mainApp) {
         this.mainApp = mainApp;
+        this.transactionManager = TransactionManager.getInstance();
+        this.customerManager = CustomerManager.getInstance();
         initializedGUI();
-    }    public void initializedGUI() {
+    }    
+    
+    public void initializedGUI() {
         setLayout(new BorderLayout(10, 10));
         
         // Create header panel with welcome message and user info
@@ -47,12 +55,10 @@ public class Dashboard extends JPanel {
         
         // Navigation options
         JPanel menuPanel = new JPanel(new GridLayout(6, 1, 0, 5));
-        menuPanel.add(createMenuButton("Account Summary", true));
-        menuPanel.add(createMenuButton("Transactions", false));
-        menuPanel.add(createMenuButton("Transfer Funds", false));
-        menuPanel.add(createMenuButton("Bill Payment", false));
-        menuPanel.add(createMenuButton("Account Settings", false));
-        menuPanel.add(createMenuButton("Customer Support", false));
+        menuPanel.add(createMenuButton("Dashboard", true));
+        menuPanel.add(createMenuButton("Customer Management", false));
+        menuPanel.add(createMenuButton("Transaction Management", false));
+        menuPanel.add(createMenuButton("Transaction Logs", false));
         
         navPanel.add(new JLabel("MENU OPTIONS", JLabel.CENTER), BorderLayout.NORTH);
         navPanel.add(menuPanel, BorderLayout.CENTER);
@@ -61,11 +67,18 @@ public class Dashboard extends JPanel {
         JPanel contentPanel = new JPanel(new GridLayout(2, 2, 15, 15));
         contentPanel.setBorder(BorderFactory.createEmptyBorder(10, 5, 10, 10));
         
-        // Add some dashboard components with more details
-        contentPanel.add(createDashboardPanel("Account Balance", "$10,000.75", "Available: $9,850.25"));
-        contentPanel.add(createDashboardPanel("Recent Transactions", "5", "Last: Coffee Shop - $4.50"));
-        contentPanel.add(createDashboardPanel("Pending Payments", "2", "Next: Electricity - $125.00"));
-        contentPanel.add(createDashboardPanel("Savings Goal", "75%", "Target: $15,000 by Dec 2025"));
+        // Add dashboard components with real data
+        contentPanel.add(createDashboardPanel("Total Customers", 
+                        String.valueOf(customerManager.getCustomerCount()), "Active accounts"));
+        contentPanel.add(createDashboardPanel("Total Transactions", 
+                        String.valueOf(transactionManager.getTotalTransactionCount()), 
+                        "All time"));
+        contentPanel.add(createDashboardPanel("Total Deposits", 
+                        String.format("$%.2f", transactionManager.getTotalAmountByType("DEPOSIT")), 
+                        String.format("%d transactions", transactionManager.getTransactionCountByType("DEPOSIT"))));
+        contentPanel.add(createDashboardPanel("Total Withdrawals", 
+                        String.format("$%.2f", transactionManager.getTotalAmountByType("WITHDRAW")), 
+                        String.format("%d transactions", transactionManager.getTransactionCountByType("WITHDRAW"))));
         
         splitPane.setLeftComponent(navPanel);
         splitPane.setRightComponent(contentPanel);
@@ -83,9 +96,18 @@ public class Dashboard extends JPanel {
         buttonPanel.add(logoutButton);
         add(buttonPanel, BorderLayout.SOUTH);
     }
-      private JPanel createDashboardPanel(String title, String value) {
-        return createDashboardPanel(title, value, null);
+    
+    public void refreshData() {
+        // Re-initialize the GUI to refresh all the statistics
+        removeAll();
+        initializedGUI();
+        revalidate();
+        repaint();
     }
+    
+    // private JPanel createDashboardPanel(String title, String value) {
+    //     return createDashboardPanel(title, value, null);
+    // }
     
     private JPanel createDashboardPanel(String title, String value, String details) {
         JPanel panel = new JPanel(new BorderLayout(5, 5));
@@ -108,14 +130,55 @@ public class Dashboard extends JPanel {
         JButton button = new JButton(text);
         button.setHorizontalAlignment(SwingConstants.LEFT);
         button.setFont(new Font("Arial", Font.PLAIN, 14));
+        button.setFocusPainted(false);
+        button.setBorderPainted(true);
+        button.setContentAreaFilled(true);
+        button.setOpaque(true);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
         
         if (isSelected) {
             button.setBackground(new Color(230, 240, 250));
             button.setFont(new Font("Arial", Font.BOLD, 14));
+        } else {
+            button.setBackground(Color.WHITE);
         }
-          button.addActionListener((ActionEvent e) -> {
-            JOptionPane.showMessageDialog(this, 
-                text + " option selected", "Menu Selection", JOptionPane.INFORMATION_MESSAGE);
+        
+        // Add hover effect
+        Color originalColor = button.getBackground();
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                if (!isSelected) {
+                    button.setBackground(new Color(245, 245, 245));
+                }
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                if (!isSelected) {
+                    button.setBackground(originalColor);
+                }
+            }
+        });
+        
+        button.addActionListener((ActionEvent e) -> {
+            // Visual feedback - temporarily change button appearance
+            button.setBackground(new Color(200, 230, 255));
+            Timer timer = new Timer(150, evt -> {
+                if (!isSelected) {
+                    button.setBackground(originalColor);
+                }
+            });
+            timer.setRepeats(false);
+            timer.start();
+            
+            if (text.equals("Customer Management")) {
+                mainApp.showPanel("customerManagement");
+            } else if (text.equals("Transaction Management")) {
+                mainApp.showPanel("transactionManagement");
+            } else if (text.equals("Transaction Logs")) {
+                mainApp.showPanel("transactionLogs");
+            } else {
+                JOptionPane.showMessageDialog(this, 
+                    text + " option selected", "Menu Selection", JOptionPane.INFORMATION_MESSAGE);
+            }
         });
         
         return button;

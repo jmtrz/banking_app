@@ -1,3 +1,7 @@
+package ui;
+
+
+
 public class BankAccount {
     private String accountNumber;
     private String accountHolder;
@@ -39,4 +43,4 @@ public class BankAccount {
         return String.format("Account: %s | Holder: %s | Balance: $%.2f", 
                            accountNumber, accountHolder, balance);
     }
-}
+} 
